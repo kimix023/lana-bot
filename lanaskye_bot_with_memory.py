@@ -1,18 +1,25 @@
 import openai
 import random
-from telegram.ext import Updater, MessageHandler, Filters
+import asyncio
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
-# UBACI SVOJE PRAVE KLJUČEVE OVDE (ili koristi .env)
-OPENAI_API_KEY = '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'
-TELEGRAM_BOT_TOKEN = '8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4'
+import os
+
+# Postavi ove vrednosti iz okruženja ili direktno
+OPENAI_API_KEY = ("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")
+TELEGRAM_BOT_TOKEN = os.getenv("8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4")
 
 openai.api_key = OPENAI_API_KEY
-
-# Memorija poruka po korisniku
 user_contexts = {}
 
-def handle_message(update, context):
-    user_id = update.message.from_user.id
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
     user_text = update.message.text
 
     if user_id not in user_contexts:
@@ -21,7 +28,6 @@ def handle_message(update, context):
     user_contexts[user_id].append({"role": "user", "content": user_text})
     user_contexts[user_id] = user_contexts[user_id][-6:]
 
-    # Povremeno nasumična flert poruka
     if random.random() < 0.2:
         flirty_lines = [
             'Morning, cutie… Did you dream about me again?',
@@ -35,7 +41,7 @@ def handle_message(update, context):
             "If I had a dollar for every naughty thought I had about you… I'd still want you instead.",
             'You have that energy I like… soft but strong.'
         ]
-        update.message.reply_text(random.choice(flirty_lines))
+        await update.message.reply_text(random.choice(flirty_lines))
         return
 
     messages = [
@@ -51,14 +57,12 @@ def handle_message(update, context):
     )
     reply = response['choices'][0]['message']['content']
     user_contexts[user_id].append({"role": "assistant", "content": reply})
-    update.message.reply_text(reply)
+    await update.message.reply_text(reply)
 
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-    updater.start_polling()
-    updater.idle()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
