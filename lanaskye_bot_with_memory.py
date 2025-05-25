@@ -11,8 +11,9 @@ from telegram.ext import (
 )
 
 # Učitavanje API ključeva iz okruženja
-OPENAI_API_KEY = os.getenv("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")
-TELEGRAM_BOT_TOKEN = os.getenv("8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
 
 # Provera tokena
 if not TELEGRAM_BOT_TOKEN or not OPENAI_API_KEY:
@@ -76,10 +77,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    app = ApplicationBuilder().token("8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4").build()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.run_polling()
 
 if __name__ == '__main__':
     main()
-
