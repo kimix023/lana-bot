@@ -48,7 +48,7 @@ def handle_message(update, context):
 def main():
     updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
     dp = updater.dispatcher
-    dp.add_handlerMessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     updater.start_polling()
     updater.idle()
 
