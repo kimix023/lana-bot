@@ -45,12 +45,15 @@ def handle_message(update, context):
     user_contexts[user_id].append({"role": "assistant", "content": reply})
     update.message.reply_text(reply)
 
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+
 def main():
-    updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handlerMessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    updater.start_polling()
-    updater.idle()
+    application = ApplicationBuilder().token(8011023920:AAE57A4qKAo0f2sssiUmjR4pdp5rs-MvwkM).build()
+    
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
