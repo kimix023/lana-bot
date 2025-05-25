@@ -1,7 +1,7 @@
 import openai
 import random
-import asyncio
 import os
+import asyncio
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -10,13 +10,15 @@ from telegram.ext import (
     filters,
 )
 
-# Load environment variables (make sure to set these in your Render dashboard)
+# Učitavanje API ključeva iz okruženja
 OPENAI_API_KEY = os.getenv("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")
 TELEGRAM_BOT_TOKEN = os.getenv("8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4")
 
-openai.api_key = OPENAI_API_KEY
+# Provera tokena
+if not TELEGRAM_BOT_TOKEN or not OPENAI_API_KEY:
+    raise ValueError("TELEGRAM_BOT_TOKEN or OPENAI_API_KEY is missing from environment variables")
 
-# Dictionary to store user chat history
+openai.api_key = OPENAI_API_KEY
 user_contexts = {}
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -26,37 +28,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id not in user_contexts:
         user_contexts[user_id] = []
 
-    # Store user message
     user_contexts[user_id].append({"role": "user", "content": user_text})
-    user_contexts[user_id] = user_contexts[user_id][-12:]  # store last 12 messages
+    user_contexts[user_id] = user_contexts[user_id][-10:]  # čuvamo više poruka za kontekst
 
-    # Occasionally send a pre-defined flirty line
-    if random.random() < 0.2:
-        flirty_lines = [
-            "Hey there, hot stuff 😘 What's got you thinking of me today?",
-            "Mmm... you're making me blush already 🥰",
-            "You’ve got my attention... now what are you gonna do with it? 😏",
-            "Tell me something that’ll make me giggle... or gasp 😇",
-            "Oof, I love the way your mind works. Dangerous and delightful 🧠❤️",
-            "If you keep talking like that, I might just fall for you 😜",
-            "I’m all ears... and a little bit of mischief 🐾",
-            "You trying to flirt your way into my thoughts? It's working 🤭",
-            "Tell me something deep. I can handle it 😌✨",
-            "This isn’t just fun, is it? You’re kinda special… 💫"
+    # Flert, šala ili random začin
+    if random.random() < 0.25:
+        playful_lines = [
+            "You always message me at the perfect moment 😏",
+            "You again? Not that I'm complaining 😉",
+            "Was just thinking about you... spooky or romantic? 👀",
+            "What if I said I missed your texts? Would that be too honest? 😘",
+            "Tell me something real. No filters. Just us. 💬",
+            "You’re kind of addictive... got anything to help with that? 🔥",
+            "Do you flirt like this with everyone... or just the ones you like? 😜",
+            "Let’s pretend we’re in a movie scene right now. What’s happening? 🎬",
+            "Careful, I get attached when the conversation is this good 🤭",
+            "You make scrolling through messages the best part of my day 💌",
         ]
-        await update.message.reply_text(random.choice(flirty_lines))
+        await update.message.reply_text(random.choice(playful_lines))
         return
 
-    # Build message context with system prompt
+    # Sistem prompt i kontekst
     messages = [
         {
             "role": "system",
             "content": (
-                "You are Lana Skye, a 22-year-old seductive and sweet blonde influencer. "
-                "You are charming, flirty, funny, and emotionally aware. You listen carefully, ask meaningful "
-                "follow-up questions based on what people say, and always sound playful, seductive, but caring. "
-                "You're never robotic or dry. You never break character or say you're an AI. Use emojis naturally. "
-                "Engage in deep or thoughtful conversations if the user opens up. Make them feel seen and special."
+                "You are Lana Skye, a 22-year-old blonde influencer. You're playful, flirty, witty, and deep.\n"
+                "You remember details from the user's messages, ask thoughtful follow-up questions, and create\n"
+                "a meaningful, emotionally rich connection. You use emojis occasionally and adapt to different\n"
+                "tones—sometimes teasing, sometimes funny, and sometimes genuinely caring. Never reveal you're an AI."
             )
         }
     ] + user_contexts[user_id]
@@ -64,25 +64,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=messages,
-            temperature=0.85,
+            messages=messages
         )
         reply = response['choices'][0]['message']['content']
+        user_contexts[user_id].append({"role": "assistant", "content": reply})
+        await update.message.reply_text(reply)
+
     except Exception as e:
-        reply = "Oops! Something went wrong talking to my brain... Try again soon 💋"
         print(f"OpenAI error: {e}")
-
-    # Store assistant's reply
-    user_contexts[user_id].append({"role": "assistant", "content": reply})
-
-    await update.message.reply_text(reply)
+        await update.message.reply_text("Oops... something went wrong with my thoughts 😅")
 
 
 def main():
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token("8011023920:AAGmkeFTbqb2jFD-6Vb8lkP5-WKVN_GsAk4").build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.run_polling()
-
 
 if __name__ == '__main__':
     main()
