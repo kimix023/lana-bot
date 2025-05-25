@@ -1,7 +1,7 @@
 
 import openai
 import random
-from telegram.ext import Updater, MessageHandler, Filters
+from telegram.ext import filters
 
 # UBACI SVOJ OPENAI I TELEGRAM TOKEN OVDE
 OPENAI_API_KEY = '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'
