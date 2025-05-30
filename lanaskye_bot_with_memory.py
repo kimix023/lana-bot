@@ -1,27 +1,24 @@
-import openai
-import random
 import os
+import random
 import asyncio
+import openai
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-# Učitavanje API ključeva iz okruženja
+# Postavljanje API ključeva iz okruženja
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-
-# Provera tokena
 if not TELEGRAM_BOT_TOKEN or not OPENAI_API_KEY:
     raise ValueError("TELEGRAM_BOT_TOKEN or OPENAI_API_KEY is missing from environment variables")
 
-openai.api_key = OPENAI_API_KEY
+# Novi OpenAI klijent
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+# Korisnički konteksti
 user_contexts = {}
 
+# Glavna funkcija za obradu poruka
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_text = update.message.text
@@ -30,9 +27,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_contexts[user_id] = []
 
     user_contexts[user_id].append({"role": "user", "content": user_text})
-    user_contexts[user_id] = user_contexts[user_id][-10:]  # čuvamo više poruka za kontekst
+    user_contexts[user_id] = user_contexts[user_id][-10:]
 
-    # Flert, šala ili random začin
+    # Flert linije
     if random.random() < 0.25:
         playful_lines = [
             "You always message me at the perfect moment 😏",
@@ -49,7 +46,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(random.choice(playful_lines))
         return
 
-    # Sistem prompt i kontekst
+    # Chat prompt
     messages = [
         {
             "role": "system",
@@ -63,11 +60,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ] + user_contexts[user_id]
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=messages
         )
-        reply = response['choices'][0]['message']['content']
+        reply = response.choices[0].message.content
         user_contexts[user_id].append({"role": "assistant", "content": reply})
         await update.message.reply_text(reply)
 
@@ -75,7 +72,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"OpenAI error: {e}")
         await update.message.reply_text("Oops... something went wrong with my thoughts 😅")
 
-
+# Pokretanje bota
 def main():
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
